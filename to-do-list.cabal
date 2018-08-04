@@ -6,7 +6,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable basic-to-do-list
-  hs-source-dirs:      app/basic-to-do-list/
+  hs-source-dirs:      apps/basic-to-do-list/
   main-is:             Main.hs
   build-depends:
     base,
