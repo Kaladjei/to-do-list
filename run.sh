@@ -20,4 +20,4 @@ cp $HOME/ghcjs/lib/etc/irunner.js ${GHCJS_LIB_ETC_PATH}/irunner.js
 export GHCJSI_STATIC_DIR=$(pwd)/app/$name/static
 
 # run GHCJSi
-stack ghci miso-aframe:exe:$name
+stack ghci to-do-list:exe:$name
