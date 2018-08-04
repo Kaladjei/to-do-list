@@ -17,7 +17,7 @@ GHCJS_LIB_ETC_PATH=$(dirname $(stack path --global-pkg-db))
 cp $HOME/ghcjs/lib/etc/irunner.js ${GHCJS_LIB_ETC_PATH}/irunner.js
 
 # specify a directory to serve static files from
-export GHCJSI_STATIC_DIR=$(pwd)/app/$name/static
+export GHCJSI_STATIC_DIR=$(pwd)/apps/$name/static
 
 # run GHCJSi
 stack ghci to-do-list:exe:$name

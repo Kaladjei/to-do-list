@@ -22,12 +22,13 @@ To run an app use `run.sh` script:
 ```
 
 When GHCJSi has loaded open your browser and point to
-http://localhost:6401/ghcjsiClient.html
+http://localhost:6400/ghcjsiClient.html
 (this is a custom REPL page with script sources specified).
 
 Now run (or reload) the app using
 
 ```
+import Miso.Dev
 clearBody >> main
 ```
 
