@@ -125,6 +125,10 @@ h1 {
     padding: 10px;
     text-align: left;
 }
+#container ul li span {
+   display: inline-block;
+   width: 100%;
+}
 #container ul li input {
     font-size: 24px;
     background-color: inherit;

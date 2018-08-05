@@ -34,6 +34,7 @@ data Action
   | Input (Map.Key, MisoString)
   | Add
   | Delete
+  | AllEditOff
 
 main :: IO ()
 main = startApp App {..}
@@ -57,8 +58,8 @@ updateModel (Edit k) m@Model{..} =
     pure NoOp
 updateModel (Input kv) m  = noEff m { currentEntry = Just kv }
 updateModel Add m@Model{..} =
-  let (k,desc) = fromJust currentEntry
-      (k', m') = updateEntry k desc m
+  let (k, desc) = fromJust currentEntry
+      (k', m') = createEntry $ updateEntry k desc m
   in m' <# do
     focus $ "item-" <> S.ms k'
     pure NoOp
@@ -77,17 +78,27 @@ disablePrevEditing mbEntry items =
     where
       mbItem v = bool (Just $ Item v False) Nothing $ S.null v
 
-updateEntry :: Map.Key -> MisoString -> Model -> (Map.Key, Model)
+disableEditing :: Item -> Item
+disableEditing item@Item{..} =
+  bool item (item { editing = False }) editing
+
+updateEntry :: Map.Key -> MisoString -> Model -> Model
 updateEntry k desc m@Model{..} =
   let items = Map.update (\item -> Just item { itemDescription = desc
                                              , editing = False
                                              }
                          ) k allEntries
-      k' = nextKey items
-      newItem = Map.singleton k'  $ Item "" True
-  in ( k'
-     , m { allEntries = items <> newItem
-         , currentEntry = Just (k', "")
+  in m { allEntries = items
+       , currentEntry = Nothing
+       }
+
+createEntry :: Model -> (Map.Key, Model)
+createEntry m@Model{..} =
+  let k = nextKey allEntries
+      newItem = Map.singleton k $ Item "" True
+  in ( k
+     , m { allEntries = allEntries <> newItem
+         , currentEntry = Just (k, "")
          }
      )
 
@@ -118,10 +129,12 @@ viewModel Model{..} = div_ [ id_ "contentWrapper" ]
     curDesc desc = fromMaybe desc $ fmap snd currentEntry
 
 entry :: Map.Key -> MisoString -> Item -> View Action
-entry k desc Item{..} = li_
-  [ onClick (Edit k) ]
-  [ bool (text itemDescription) (itemInput k desc) editing
+entry k desc Item{..} = li_[]
+  [ bool (itemDisplay k itemDescription) (itemInput k desc) editing
   ]
+
+itemDisplay :: Map.Key -> MisoString -> View Action
+itemDisplay k desc = span_ [ onClick (Edit k) ] [ text desc ]
 
 itemInput :: Map.Key -> MisoString -> View Action
 itemInput k desc = input_
