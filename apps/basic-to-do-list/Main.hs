@@ -49,8 +49,9 @@ main = startApp App {..}
 updateModel :: Action -> Model -> Effect Action Model
 updateModel NoOp m = noEff m
 updateModel (Edit k) m@Model{..} =
-  m { allEntries = enableEditing k (fromMaybe "" $ fmap snd currentEntry) allEntries
-    , currentEntry = Just (k, itemDescription $ allEntries Map.! k)
+  m { allEntries = disablePrevEditing currentEntry $
+                     Map.update (Just . enableEditing) k allEntries
+    , currentEntry = Just (k , itemDescription $ allEntries Map.! k)
     } <# do
     focus $ "item-" <> S.ms k
     pure NoOp
@@ -67,14 +68,14 @@ updateModel Delete m@Model{..} = noEff $
 nextKey :: IntMap a -> Int
 nextKey = succ . fst . fst . fromJust . Map.maxViewWithKey
 
-enableEditing :: Map.Key -> MisoString -> IntMap Item -> IntMap Item
-enableEditing k desc = Map.foldrWithKey' go Map.empty
-  where
-    go k' item@Item{..} items
-      | k == k' = Map.insert k' (item { editing = True }) items
-      | editing && S.null desc = items
-      | editing = Map.insert k' (Item desc False) items
-      | otherwise = Map.insert k' item items
+enableEditing :: Item -> Item
+enableEditing item = item { editing = True }
+
+disablePrevEditing :: Maybe (Map.Key, MisoString) -> IntMap Item -> IntMap Item
+disablePrevEditing mbEntry items =
+  maybe items (\(k, v) -> Map.alter (const (mbItem v)) k items) mbEntry
+    where
+      mbItem v = bool (Just $ Item v False) Nothing $ S.null v
 
 updateEntry :: Map.Key -> MisoString -> Model -> (Map.Key, Model)
 updateEntry k desc m@Model{..} =
@@ -86,7 +87,7 @@ updateEntry k desc m@Model{..} =
       newItem = Map.singleton k'  $ Item "" True
   in ( k'
      , m { allEntries = items <> newItem
-         , currentEntry = Nothing
+         , currentEntry = Just (k', "")
          }
      )
 
