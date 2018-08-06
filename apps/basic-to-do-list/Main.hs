@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
@@ -8,21 +10,23 @@ import Miso
 import Miso.String (MisoString, ms)
 import qualified Miso.String as S
 
+import Data.Aeson
 import Data.Bool (bool)
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as Map
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Monoid
+import GHC.Generics
 
 data Item = Item
   { itemDescription :: MisoString
   , editing         :: Bool
-  } deriving (Eq)
+  } deriving (Eq, Generic, ToJSON, FromJSON)
 
 data Model = Model
   { allEntries   :: IntMap Item
   , currentEntry :: Maybe (Map.Key, MisoString)
-  } deriving (Eq)
+  } deriving (Eq, Generic, ToJSON, FromJSON)
 
 initialModel :: Model
 initialModel =
@@ -30,16 +34,19 @@ initialModel =
 
 data Action
   = NoOp
+  | GetToDo
+  | SetToDo Model
   | Edit Map.Key
   | Input (Map.Key, MisoString)
   | Add
   | Delete
-  | AllEditOff
+  | SaveAll
+  | ClearAll
 
 main :: IO ()
 main = startApp App {..}
   where
-    initialAction = NoOp
+    initialAction = GetToDo
     model         = initialModel
     update        = updateModel
     view          = viewModel
@@ -49,6 +56,10 @@ main = startApp App {..}
 
 updateModel :: Action -> Model -> Effect Action Model
 updateModel NoOp m = noEff m
+updateModel GetToDo m = m <# do
+  store <- getLocalStorage "todoList"
+  pure $ SetToDo $ either (const m) id store
+updateModel (SetToDo m) _ = noEff m
 updateModel (Edit k) m@Model{..} =
   m { allEntries = disablePrevEditing currentEntry $
                      Map.update (Just . enableEditing) k allEntries
@@ -65,6 +76,12 @@ updateModel Add m@Model{..} =
     pure NoOp
 updateModel Delete m@Model{..} = noEff $
   deleteEntry (fst $ fromJust currentEntry) m
+updateModel SaveAll m = m <# do
+  setLocalStorage "todoList" m
+  pure NoOp
+updateModel ClearAll _ = initialModel <# do
+  clearLocalStorage
+  pure NoOp
 
 nextKey :: IntMap a -> Int
 nextKey = succ . fst . fst . fromJust . Map.maxViewWithKey
@@ -122,6 +139,10 @@ viewModel Model{..} = div_ [ id_ "contentWrapper" ]
           [ ul_ [ id_ "theList" ] $
               Map.foldrWithKey' (\k item@Item{..} xs ->
                 entry k (curDesc itemDescription) item : xs) [] allEntries
+          , p_ []
+              [ button_ [ onClick SaveAll ] [ text "Save All" ]
+              , button_ [ onClick ClearAll ] [ text "Clear All" ]
+              ]
           ]
       ]
   ]

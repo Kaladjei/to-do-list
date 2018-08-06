@@ -130,6 +130,7 @@ h1 {
    width: 100%;
 }
 #container ul li input {
+    outline: none;
     font-size: 24px;
     background-color: inherit;
     text-align: left;
@@ -143,4 +144,18 @@ article h2 {
     color: blue;
     margin-bottom: .5em;
     clear: both;
+}
+button {
+    border: none;
+    outline: none;
+    color: lightblue;
+    background-color: white;
+    cursor: pointer;
+}
+button:hover {
+    color: orange;
+}
+#container p {
+    text-align: center;
+    text-decoration: underline;
 }
