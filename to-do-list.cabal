@@ -14,3 +14,13 @@ executable basic-to-do-list
     containers,
     miso
   default-language:    Haskell2010
+
+executable advanced-to-do-list
+  hs-source-dirs:      apps/advanced-to-do-list/
+  main-is:             Main.hs
+  build-depends:
+    aeson,
+    base,
+    containers,
+    miso
+  default-language:    Haskell2010
