@@ -5,6 +5,7 @@ Basic and advanced to do applications written with miso
 ### Apps
 
 - Basic ([sources](apps/basic-to-do-list))
+- Advanced ([sources](apps/advanced-to-do-list))
 
 ### How to build
 
